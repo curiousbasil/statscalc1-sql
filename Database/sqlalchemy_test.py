@@ -1,9 +1,9 @@
-from sqlalchemy import Column, ForeignKey, Integer, String
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
 from pprint import pprint
+
+from sqlalchemy import Column, Integer, String
+from sqlalchemy import create_engine
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
 
 # Create an engine that stores data in the local directory's
 # sqlalchemy_example.db file.
@@ -15,26 +15,26 @@ Base = declarative_base()
 
 # Setting up the classes that create the record objects and define the schema
 
-class Person(Base):
-    __tablename__ = 'person'
+class Customer(Base):
+    __tablename__ = 'customer'
     # Here we define columns for the table person
     # Notice that each column is also a normal Python instance attribute.
-    id = Column(Integer, primary_key=True)
-    name = Column(String(250), nullable=False)
+    first_name = Column(String(250), nullable=False)
+    last_name = Column(String(250), nullable=False)
+    username = Column(String(250), nullable=False)
+    email = Column(String(250), nullable=False)
+    address = Column(String(250), nullable=False)
+    town = Column(String(250), nullable=False)
 
 
-class Address(Base):
-    __tablename__ = 'address'
+class Item(Base):
+    __tablename__ = 'item'
     # Here we define columns for the table address.
     # Notice that each column is also a normal Python instance attribute.
-    id = Column(Integer, primary_key=True)
-    street_name = Column(String(250))
-    street_number = Column(String(250))
-    post_code = Column(String(250), nullable=False)
-    # creates the field to store the person id
-    person_id = Column(Integer, ForeignKey('person.id'))
-    # creates the relationship between the person and addresses.  backref adds a property to the Person class to retrieve addresses
-    person = relationship("Person", backref="addresses")
+    name = Column(String(250))
+    cost_price = Column(Integer, primary_key=True)
+    selling_price = Column(Integer, primary_key=True)
+    quantity = Column(Integer, primary_key=True)
 
 
 # Create all tables in the engine. This is equivalent to "Create Table"
@@ -54,31 +54,32 @@ DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
 # Insert a Person in the person table
-new_person1 = Person(name='Keith')
+new_person1 = Customer(name='Keith')
+# this adds person to the session
 session.add(new_person1)
 
-new_person2 = Person(name='Joe')
+new_person2 = Customer(name='Joe')
 session.add(new_person1)
 
-new_person3 = Person(name='Steve')
+new_person3 = Customer(name='Steve')
 session.add(new_person1)
+# commit saves the changes
 session.commit()
 
 # Insert an Address in the address table using a loop
 
-addresses = [
-    Address(post_code='00001', person=new_person1),
-    Address(post_code='00002', person=new_person2),
-    Address(post_code='00003', person=new_person3),
-]
+items = {
+    Item('Chair', 9, 10, 5),
+    Item('Table', 15, 17 , 10),
+}
 
 # Loop through addresses and commit them to the database
-for address in addresses:
-    session.add(address)
+for Item in items:
+    session.add(Item)
     session.commit()
 
 # joins Person on Address
-all_people = session.query(Person).join(Address).all()
+all_people = session.query(Customer).join(Customer).all()
 
 # Accessing a person with their address, You have to loop the addresses property and remember it was added by the
 # backref on the addresses class
@@ -89,7 +90,7 @@ for person in all_people:
         pprint(address.__dict__)
 
 # Retrieving the inverse of the relationship.  Notice I reverse the Person and Address to load the Address table
-all_addresses = session.query(Address).join(Person).all()
+all_addresses = session.query(Item).join(Customer).all()
 for address in all_addresses:
     # showing how to use the print function with printing text and data at the same time easily
     print(f'{address.person.name} has a postal code of {address.post_code}')
